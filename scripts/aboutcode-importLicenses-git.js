@@ -29,6 +29,13 @@ import os from 'node:os'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 
+/** @typedef {{license_key: string,
+ * is_deprecated: boolean,
+ * is_exception: boolean,
+ * source: "aboutCode" | "spdx",
+ * deprecated_since: string,
+ * deprecated_date: string}} LicenseEntry */
+
 const execFileAsync = promisify(execFile)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -234,10 +241,10 @@ async function findDeprecationCommitDate(repoDir, licenseKey) {
 // ---------------------------------------------------------------------------
 /**
  *
- * @return {Promise<Array<{license_key: string, is_deprecated: boolean, is_exception: boolean, source: "aboutCode", deprecated_since: string, deprecated_date: string}>>}
+ * @return {Promise<Array<LicenseEntry>>}
  */
 export async function read_aboutcode_licenses_from_git() {
-  // 1. Fetch the license index
+  // Fetch the license index
   console.log(`Fetching license index from ${INDEX_URL} …`)
   const response = await fetch(INDEX_URL)
   if (!response.ok) {
@@ -267,24 +274,17 @@ export async function read_aboutcode_licenses_from_git() {
   )
 
   try {
-    // 2. Clone repo (blobless + sparse)
+    // Clone repo (blobless + sparse)
     await cloneRepo(tmpDir)
 
-    // 3. Build version → date map from git tags
+    // Build version → date map from git tags
     const versionDateMap = await buildVersionDateMap(tmpDir)
 
-    // 4. Process each entry from the index
+    // Process each entry from the index
     console.log(`\nProcessing ${indexEntries.length} licenses …`)
 
     /**
-     * @type {Array<{
-     *   license_key: string,
-     *   is_deprecated: boolean,
-     *   is_exception: boolean,
-     *   source: 'aboutCode',
-     *   deprecated_since: string,
-     *   deprecated_date: string
-     * }>}
+     * @type {Array<LicenseEntry>}
      */
     const results = []
 
@@ -311,7 +311,7 @@ export async function read_aboutcode_licenses_from_git() {
       })
     }
 
-    // 5. Sort by license_key (case-insensitive)
+    // Sort by license_key (case-insensitive)
     results.sort((a, b) =>
       a.license_key.toLowerCase().localeCompare(b.license_key.toLowerCase()),
     )

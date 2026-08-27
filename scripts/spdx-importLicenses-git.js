@@ -11,7 +11,7 @@
  *   2. Read json/licenses.json and json/exceptions.json from the cloned repo.
  *   3. Build a version → date map from the git tags of the cloned repo.
  *   4. For each deprecated license/exception read the individual detail JSON from disk.
- *   5. Write the result to scripts/spdx_licenses.json and clean up the temp directory.
+ *
  *
  * Usage:
  *   node scripts/spdx-importLicenses-git.js
@@ -22,6 +22,12 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import { git } from './aboutcode-importLicenses-git.js'
+
+/** @typedef {import('./aboutcode-importLicenses-git.js').LicenseEntry} LicenseEntry */
+
+/** @typedef {{licenseId: string, isDeprecatedLicenseId: boolean, detailsUrl: string}} SpdxLicenseEntry */
+/** @typedef {{licenseExceptionId: string, isDeprecatedLicenseId: boolean, detailsUrl: string}} SpdxExceptionEntry*/
+/** @typedef {SpdxLicenseEntry | SpdxExceptionEntry} SpdxEntry */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUTPUT_FILE = path.join(__dirname, 'spdx_licenses.json')
@@ -159,7 +165,7 @@ async function readDeprecatedVersion(detailFilePath) {
     )
     return detail.deprecatedVersion ?? null
   } catch {
-    return null
+    throw new Error(`Failed to read JSON file: ${detailFilePath}`)
   }
 }
 
@@ -184,96 +190,100 @@ function resolveDeprecation(deprecatedVersion, versionDateMap) {
 
 // ---------------------------------------------------------------------------
 // Main
+
+/**
+ * @param {Array<SpdxEntry>} licenses
+ * @param {string} tmpDir
+ * @param {Map<string, string>} versionDateMap
+ * @param {boolean} isException
+ * @return {Promise<Array<LicenseEntry>>}
+ */
+async function processLicenses(licenses, tmpDir, versionDateMap, isException) {
+  /** @type {Array<LicenseEntry>} */
+  const results = []
+  for (const license of licenses) {
+    let deprecatedSince = ''
+    let deprecatedDate = ''
+
+    if (license.isDeprecatedLicenseId) {
+      const detailsPath = isException ? 'exceptions' : 'details'
+      // The detailsUrl looks like "https://spdx.org/licenses/GPL-2.0.json"
+      // Map it to the local path:  json/details/GPL-2.0.json
+      const filename = license.detailsUrl.split('/').pop() // e.g. "GPL-2.0.json"
+      const detailPath = path.join(tmpDir, 'json', detailsPath, filename ?? '')
+      const deprecatedVersion = await readDeprecatedVersion(detailPath)
+      if (deprecatedVersion) {
+        ;({ deprecatedSince, deprecatedDate } = resolveDeprecation(
+          deprecatedVersion,
+          versionDateMap,
+        ))
+      }
+    }
+
+    results.push({
+      license_key:
+        'licenseId' in license ? license.licenseId : license.licenseExceptionId,
+      is_deprecated: license.isDeprecatedLicenseId,
+      source: 'spdx',
+      is_exception: isException,
+      deprecated_since: deprecatedSince,
+      deprecated_date: deprecatedDate,
+    })
+  }
+  return results
+}
+
 // ---------------------------------------------------------------------------
 /**
  *
- * @return {Promise<*[]>}
+ * @return {Promise<Array<LicenseEntry>>}
  */
 export async function read_spdx_licenses_from_git() {
   // Create a temporary directory for the clone
   const tmpDir = path.join(os.tmpdir(), `spdx-license-list-data-${Date.now()}`)
 
   try {
-    // 1. Clone repo (shallow + sparse – only json/)
+    // Clone repo (shallow + sparse – only json/)
     await cloneRepo(tmpDir)
 
-    // 2. Read license list + exception list from disk
+    // Read license list + exception list from disk
     console.log('Reading licenses.json and exceptions.json …')
 
-    const licensesData =
-      /** @type {{licenses: Array<{licenseId: string, isDeprecatedLicenseId: boolean, detailsUrl: string}>}} */ (
-        await readJSON(path.join(tmpDir, 'json', 'licenses.json'))
-      )
+    const licensesData = /** @type {{licenses: Array<SpdxLicenseEntry>}} */ (
+      await readJSON(path.join(tmpDir, 'json', 'licenses.json'))
+    )
 
     const exceptionsData =
-      /** @type {{exceptions: Array<{licenseExceptionId: string, isDeprecatedLicenseId: boolean, detailsUrl: string}>}} */ (
+      /** @type {{exceptions: Array<SpdxExceptionEntry>}} */ (
         await readJSON(path.join(tmpDir, 'json', 'exceptions.json'))
       )
 
-    // 3. Build version → date map from git tags
+    // Build version → date map from git tags
     const versionDateMap = await buildVersionDateMap(tmpDir)
 
-    // 4. Process licenses
-    const results = []
+    // Process licenses
 
     console.log(`Processing ${licensesData.licenses.length} licenses …`)
-    for (const license of licensesData.licenses) {
-      let deprecatedSince = ''
-      let deprecatedDate = ''
+    /** @type {Array<LicenseEntry>} */
+    const results = await processLicenses(
+      licensesData.licenses,
+      tmpDir,
+      versionDateMap,
+      false,
+    )
 
-      if (license.isDeprecatedLicenseId) {
-        // The detailsUrl looks like "https://spdx.org/licenses/GPL-2.0.json"
-        // Map it to the local path:  json/details/GPL-2.0.json
-        const filename = license.detailsUrl.split('/').pop() // e.g. "GPL-2.0.json"
-        const detailPath = path.join(tmpDir, 'json', 'details', filename ?? '')
-        const deprecatedVersion = await readDeprecatedVersion(detailPath)
-        if (deprecatedVersion) {
-          ;({ deprecatedSince, deprecatedDate } = resolveDeprecation(
-            deprecatedVersion,
-            versionDateMap,
-          ))
-        }
-      }
-
-      results.push({
-        license_key: license.licenseId,
-        is_deprecated: license.isDeprecatedLicenseId,
-        source: 'spdx',
-        is_exception: false,
-        deprecated_since: deprecatedSince,
-        deprecated_date: deprecatedDate,
-      })
-    }
-
-    // 5. Process exceptions
+    // Process exceptions
     console.log(`Processing ${exceptionsData.exceptions.length} exceptions …`)
-    for (const exception of exceptionsData.exceptions) {
-      let deprecatedSince = ''
-      let deprecatedDate = ''
+    /** @type {Array<LicenseEntry>} */
+    const excpResults = await processLicenses(
+      exceptionsData.exceptions,
+      tmpDir,
+      versionDateMap,
+      true,
+    )
+    results.push(...excpResults)
 
-      if (exception.isDeprecatedLicenseId) {
-        const filename = exception.detailsUrl.split('/').pop()
-        const detailPath = path.join(tmpDir, 'json', 'details', filename ?? '')
-        const deprecatedVersion = await readDeprecatedVersion(detailPath)
-        if (deprecatedVersion) {
-          ;({ deprecatedSince, deprecatedDate } = resolveDeprecation(
-            deprecatedVersion,
-            versionDateMap,
-          ))
-        }
-      }
-
-      results.push({
-        license_key: exception.licenseExceptionId,
-        is_deprecated: exception.isDeprecatedLicenseId,
-        source: 'spdx',
-        is_exception: true,
-        deprecated_since: deprecatedSince,
-        deprecated_date: deprecatedDate,
-      })
-    }
-
-    // 6. Sort by license_key (case-insensitive)
+    // Sort by license_key (case-insensitive)
     results.sort((a, b) =>
       a.license_key.toLowerCase().localeCompare(b.license_key.toLowerCase()),
     )
@@ -286,7 +296,7 @@ export async function read_spdx_licenses_from_git() {
 
     return results
   } finally {
-    // 8. Clean up temp directory
+    // Clean up temp directory
     console.log(`\nCleaning up ${tmpDir} …`)
     await rm(tmpDir, { recursive: true, force: true })
     console.log('  Done.')

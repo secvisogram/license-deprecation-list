@@ -5,18 +5,23 @@ import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+/** @typedef {import('./aboutcode-importLicenses-git.js').LicenseEntry} LicenseEntry */
+
 async function main() {
   const today = new Date().toISOString().slice(0, 10)
 
+  /** @type {Array<LicenseEntry>} */
   const licenses = [
     ...(await read_spdx_licenses_from_git()),
     ...(await read_aboutcode_licenses_from_git()),
   ]
 
+  /** @type {string} */
   const licenseEntries = licenses
     .map((id) => `    ${JSON.stringify(id)}`)
     .join(',\n')
 
+  /** @type {string} */
   const content = `\
 /**
  * Array of all licenses from spdx and aboutcode.
