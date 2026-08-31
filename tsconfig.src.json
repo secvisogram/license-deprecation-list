@@ -40,5 +40,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "files": ["index.js", "lib/license_information.js"]
+  "files": ["index.js", "lib/licenses.js", "lib/exceptions.js"]
 }

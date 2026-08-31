@@ -11,10 +11,6 @@
     "module": "nodenext",
     "target": "esnext",
     "types": ["node"],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
 
     // Other Outputs
     "emitDeclarationOnly": true,
@@ -30,9 +26,11 @@
     // "noUnusedParameters": true,
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
+    "allowImportingTsExtensions": true,
+    "forceConsistentCasingInFileNames": true,
 
-    "allowJs": true,
     "checkJs": true,
+    "allowJs": true,
 
     // Recommended Options
     "strict": true,
@@ -42,5 +40,12 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "references": [{ "path": "./tsconfig.src.json" }]
+  "references": [{ "path": "./tsconfig.src.json" }],
+  "include": [
+    "scripts",
+    "license-list-data/json/exceptions.json",
+    "license-list-data/json/licenses.json",
+    ".oxfmtrc.json"
+  ],
+  "exclude": ["scripts/licenseParser.js"]
 }
