@@ -1,0 +1,6 @@
+[submodule "scancode-toolkit"]
+	path = scancode-toolkit
+	url = https://github.com/aboutcode-org/scancode-toolkit.git
+[submodule "license-list-data"]
+	path = license-list-data
+	url = https://github.com/spdx/license-list-data.git

@@ -1,0 +1,28 @@
+{
+  "name": "@secvisogram/license-deprecation-list",
+  "version": "0.0.1",
+  "description": "Provide information about when spdx and aboutcode licenses and exceptions are deprecated",
+  "license": "Apache-2.0",
+  "files": [
+    "index.js",
+    "lib",
+    "dist/**/*.d.ts"
+  ],
+  "type": "module",
+  "exports": {
+    "import": "./index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "scripts": {
+    "test": "oxfmt --check && tsc -b .",
+    "update_license_information": "git submodule update --init --remote && node scripts/update_license_information.ts",
+    "prepublishOnly": "tsc -b tsconfig.src.json",
+    "prepare": "peggy --format es scripts/licenseParser.peggy"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "oxfmt": "^0.65.0",
+    "peggy": "^5.1.0",
+    "typescript": "^7.0.2"
+  }
+}
