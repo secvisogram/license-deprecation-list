@@ -1,3 +1,10 @@
+/*
+  This is a tiny parser to parse the front matter of the license files located
+  in scancode-toolkit/tests/licensedcode/data/. Since the the data we need here
+  is layed out in simply structured yaml it deemed sufficient instead of using a
+  full featured yaml parser just to parse some string and boolean fields.
+ */
+
 license = S front_matter_start S frontMatter:front_matter S front_matter_end licenseText:license_text {
   return frontMatter
 }

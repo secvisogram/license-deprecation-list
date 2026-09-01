@@ -45,7 +45,7 @@
     "scripts",
     "license-list-data/json/exceptions.json",
     "license-list-data/json/licenses.json",
-    ".oxfmtrc.json"
+    "oxfmt.config.ts"
   ],
   "exclude": ["scripts/licenseParser.js"]
 }

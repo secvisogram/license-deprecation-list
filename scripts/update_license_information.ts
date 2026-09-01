@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import { format } from 'oxfmt'
 
-import oxfmtConfig from '../.oxfmtrc.json' with { type: 'json' }
+import oxfmtConfig from '../oxfmt.config.ts'
 import { readAboutcodeLicensesFromGit } from './aboutcode-importLicenses-git.ts'
 import { readSpdxLicensesFromGit } from './spdx-importLicenses-git.ts'
 
