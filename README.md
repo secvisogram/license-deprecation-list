@@ -1,6 +1,7 @@
 # license-deprecation-list
 
-This repo contains data when license identifiers or expressions from spdx and aboutcode were deprecated. It is automatically generated from the `scancode-toolkit` (AboutCode) and `license-list-data` (SPDX) git submodules. See [scripts/README.md](scripts/README.md) for how to regenerate it.
+This repository tracks when license identifiers or expressions from SPDX and AboutCode were deprecated.
+It provides two lists: one for licenses and one for exceptions. These lists are automatically generated from the `scancode-toolkit` (AboutCode) and `license-list-data` (SPDX) git submodules. See [scripts/README.md](scripts/README.md) for how to regenerate it.
 
 ## Installation
 
