@@ -16,7 +16,7 @@
   "scripts": {
     "test": "oxfmt --check && tsc -b .",
     "update_license_information": "git submodule update --init --remote && node scripts/update_license_information.ts",
-    "prepublishOnly": "tsc -b tsconfig.src.json",
+    "prepublishOnly": "rm -r dist && tsc -b tsconfig.src.json",
     "prepare": "peggy --format es scripts/licenseParser.peggy"
   },
   "devDependencies": {
