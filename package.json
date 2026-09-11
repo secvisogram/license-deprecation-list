@@ -1,6 +1,6 @@
 {
   "name": "@secvisogram/license-deprecation-list",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Provide information about when spdx and aboutcode licenses and exceptions are deprecated",
   "keywords": [
     "aboutcode",
