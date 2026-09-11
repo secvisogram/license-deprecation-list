@@ -2,7 +2,20 @@
   "name": "@secvisogram/license-deprecation-list",
   "version": "0.0.1",
   "description": "Provide information about when spdx and aboutcode licenses and exceptions are deprecated",
+  "keywords": [
+    "aboutcode",
+    "license",
+    "spdx"
+  ],
+  "homepage": "https://github.com/secvisogram/license-deprecation-list#readme",
+  "bugs": {
+    "url": "https://github.com/secvisogram/license-deprecation-list/issues"
+  },
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/secvisogram/license-deprecation-list.git"
+  },
   "files": [
     "index.js",
     "lib",
@@ -24,5 +37,8 @@
     "oxfmt": "^0.65.0",
     "peggy": "^5.1.0",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
